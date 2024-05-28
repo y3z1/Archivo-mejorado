@@ -2,6 +2,8 @@ import csv
 from datetime import datetime
 from tkinter import *
 from tkinter import messagebox
+from tkinter import ttk
+from tkcalendar import DateEntry
 from colorama import init
 import pyfiglet
 import time
@@ -79,32 +81,31 @@ def imprimir_titulo(titulo):
 def agregar_ingreso():
     descripcion = ingreso_var.get()
     cantidad = float(cantidad_var.get())
-    fecha = fecha_var.get()
-    try:
-        datetime.strptime(fecha, '%d-%m-%y')
-        transaccion = Transaccion(descripcion, cantidad, 'ingreso', fecha)
-        finanzas.agregar_transaccion(transaccion)
-        # Limpiar las entradas
-        ingreso_var.set("")
-        cantidad_var.set(0.0)
-        fecha_var.set("")
-    except ValueError:
-        messagebox.showerror("Error", "Fecha inválida. Por favor, ingrese la fecha en formato DD-MM-YY.")
+    fecha = fecha_ingreso_var.get()
+    transaccion = Transaccion(descripcion, cantidad, 'ingreso', fecha)
+    finanzas.agregar_transaccion(transaccion)
+    # Limpiar las entradas
+    ingreso_var.set("")
+    cantidad_var.set(0.0)
 
 def agregar_gasto():
     descripcion = gasto_var.get()
     cantidad = float(cantidad_gasto_var.get())
     fecha = fecha_gasto_var.get()
-    try:
-        datetime.strptime(fecha, '%d-%m-%y')
-        transaccion = Transaccion(descripcion, cantidad, 'gasto', fecha)
-        finanzas.agregar_transaccion(transaccion)
-        # Limpiar las entradas
-        gasto_var.set("")
-        cantidad_gasto_var.set(0.0)
-        fecha_gasto_var.set("")
-    except ValueError:
-        messagebox.showerror("Error", "Fecha inválida. Por favor, ingrese la fecha en formato DD-MM-YY.")
+    transaccion = Transaccion(descripcion, cantidad, 'gasto', fecha)
+    finanzas.agregar_transaccion(transaccion)
+    # Limpiar las entradas
+    gasto_var.set("")
+    cantidad_gasto_var.set(0.0)
+
+def agregar_categoria():
+    nueva_categoria = nueva_categoria_var.get()
+    if nueva_categoria and nueva_categoria not in categorias_gasto:
+        categorias_gasto.append(nueva_categoria)
+        gasto_var['values'] = categorias_gasto
+        nueva_categoria_var.set("")
+    else:
+        messagebox.showerror("Error", "La categoría ya existe o está vacía.")
 
 def mostrar_totales():
     finanzas.mostrar_totales()
@@ -119,38 +120,46 @@ root.title("Patet Pecuniae")
 # Crear variables para almacenar la entrada del usuario
 ingreso_var = StringVar()
 cantidad_var = DoubleVar()
-fecha_var = StringVar()
+fecha_ingreso_var = StringVar()
 gasto_var = StringVar()
 cantidad_gasto_var = DoubleVar()
 fecha_gasto_var = StringVar()
+nueva_categoria_var = StringVar()
 
 # Inicializar variables
 ingreso_var.set("")
 cantidad_var.set(0.0)
-fecha_var.set("")
 gasto_var.set("")
 cantidad_gasto_var.set(0.0)
-fecha_gasto_var.set("")
+nueva_categoria_var.set("")
+
+# Listas de categorías
+categorias_ingreso = ["Nómina", "Extras", "Clau"]
+categorias_gasto = ["Alquiler", "Compra", "Agua", "Luz", "Gas", "Internet", "Samu Cole"]
 
 # Crear widgets
 Label(root, text="Ingreso:").grid(row=0, column=0, padx=5, pady=5)
-Entry(root, textvariable=ingreso_var).grid(row=0, column=1, padx=5, pady=5)
+ttk.Combobox(root, textvariable=ingreso_var, values=categorias_ingreso).grid(row=0, column=1, padx=5, pady=5)
 Label(root, text="Cantidad:").grid(row=0, column=2, padx=5, pady=5)
 Entry(root, textvariable=cantidad_var).grid(row=0, column=3, padx=5, pady=5)
-Label(root, text="Fecha (DD-MM-YY):").grid(row=0, column=4, padx=5, pady=5)
-Entry(root, textvariable=fecha_var).grid(row=0, column=5, padx=5, pady=5)
+Label(root, text="Fecha:").grid(row=0, column=4, padx=5, pady=5)
+DateEntry(root, textvariable=fecha_ingreso_var, date_pattern='dd-mm-yy').grid(row=0, column=5, padx=5, pady=5)
 Button(root, text="Agregar Ingreso", command=agregar_ingreso).grid(row=0, column=6, padx=5, pady=5)
 
 Label(root, text="Gasto:").grid(row=1, column=0, padx=5, pady=5)
-Entry(root, textvariable=gasto_var).grid(row=1, column=1, padx=5, pady=5)
+ttk.Combobox(root, textvariable=gasto_var, values=categorias_gasto).grid(row=1, column=1, padx=5, pady=5)
 Label(root, text="Cantidad:").grid(row=1, column=2, padx=5, pady=5)
 Entry(root, textvariable=cantidad_gasto_var).grid(row=1, column=3, padx=5, pady=5)
-Label(root, text="Fecha (DD-MM-YY):").grid(row=1, column=4, padx=5, pady=5)
-Entry(root, textvariable=fecha_gasto_var).grid(row=1, column=5, padx=5, pady=5)
+Label(root, text="Fecha:").grid(row=1, column=4, padx=5, pady=5)
+DateEntry(root, textvariable=fecha_gasto_var, date_pattern='dd-mm-yy').grid(row=1, column=5, padx=5, pady=5)
 Button(root, text="Agregar Gasto", command=agregar_gasto).grid(row=1, column=6, padx=5, pady=5)
 
-Button(root, text="Mostrar Totales", command=mostrar_totales).grid(row=2, column=0, columnspan=3, padx=5, pady=5)
-Button(root, text="Mostrar Transacciones", command=mostrar_transacciones).grid(row=2, column=3, columnspan=4, padx=5, pady=5)
+Label(root, text="Nueva Categoría de Gasto:").grid(row=2, column=0, padx=5, pady=5)
+Entry(root, textvariable=nueva_categoria_var).grid(row=2, column=1, padx=5, pady=5)
+Button(root, text="Agregar Categoría", command=agregar_categoria).grid(row=2, column=2, padx=5, pady=5)
+
+Button(root, text="Mostrar Totales", command=mostrar_totales).grid(row=3, column=0, columnspan=3, padx=5, pady=5)
+Button(root, text="Mostrar Transacciones", command=mostrar_transacciones).grid(row=3, column=3, columnspan=4, padx=5, pady=5)
 
 # Crear instancia de FinanzasPersonales
 archivo_csv = 'transacciones.csv'
