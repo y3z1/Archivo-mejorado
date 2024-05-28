@@ -102,7 +102,7 @@ def agregar_categoria():
     nueva_categoria = nueva_categoria_var.get()
     if nueva_categoria and nueva_categoria not in categorias_gasto:
         categorias_gasto.append(nueva_categoria)
-        gasto_var['values'] = categorias_gasto
+        gasto_combobox['values'] = categorias_gasto
         nueva_categoria_var.set("")
     else:
         messagebox.showerror("Error", "La categoría ya existe o está vacía.")
@@ -147,7 +147,8 @@ DateEntry(root, textvariable=fecha_ingreso_var, date_pattern='dd-mm-yy').grid(ro
 Button(root, text="Agregar Ingreso", command=agregar_ingreso).grid(row=0, column=6, padx=5, pady=5)
 
 Label(root, text="Gasto:").grid(row=1, column=0, padx=5, pady=5)
-ttk.Combobox(root, textvariable=gasto_var, values=categorias_gasto).grid(row=1, column=1, padx=5, pady=5)
+gasto_combobox = ttk.Combobox(root, textvariable=gasto_var, values=categorias_gasto)
+gasto_combobox.grid(row=1, column=1, padx=5, pady=5)
 Label(root, text="Cantidad:").grid(row=1, column=2, padx=5, pady=5)
 Entry(root, textvariable=cantidad_gasto_var).grid(row=1, column=3, padx=5, pady=5)
 Label(root, text="Fecha:").grid(row=1, column=4, padx=5, pady=5)
