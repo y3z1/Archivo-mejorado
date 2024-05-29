@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patet Pecuniae</title>
+</head>
+<body>
+    <h1>Patet Pecuniae</h1>
+    <form action="{{ url_for('agregar') }}" method="post">
+        <label for="descripcion">Descripción:</label>
+        <input type="text" id="descripcion" name="descripcion" required>
+        <label for="cantidad">Cantidad:</label>
+        <input type="number" id="cantidad" name="cantidad" step="0.01" required>
+        <label for="tipo">Tipo:</label>
+        <select id="tipo" name="tipo">
+            <option value="ingreso">Ingreso</option>
+            <option value="gasto">Gasto</option>
+        </select>
+        <label for="fecha">Fecha:</label>
+        <input type="date" id="fecha" name="fecha" required>
+        <label for="categoria">Categoría:</label>
+        <select id="categoria" name="categoria">
+            {% for categoria in categorias_gasto %}
+            <option value="{{ categoria }}">{{ categoria }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Agregar</button>
+    </form>
+
+    <h2>Transacciones</h2>
+    <ul>
+        {% for transaccion in transacciones %}
+        <li>{{ transaccion['fecha'] }} - {{ transaccion['descripcion'] }} - {{ transaccion['cantidad'] }} - {{ transaccion['tipo'] }} - {{ transaccion['categoria'] }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Agregar Categoría de Gasto</h2>
+    <form action="{{ url_for('agregar_categoria') }}" method="post">
+        <label for="nueva_categoria">Nueva Categoría:</label>
+        <input type="text" id="nueva_categoria" name="nueva_categoria" required>
+        <button type="submit">Agregar Categoría</button>
+    </form>
+
+    <h2>Ver Totales</h2>
+    <a href="{{ url_for('totales') }}">Mostrar Totales</a>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+</body>
+</html>
