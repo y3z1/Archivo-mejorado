@@ -22,10 +22,13 @@ class Transaccion:
 
 # Definir una clase para representar el control de finanzas
 class FinanzasPersonales:
-    def __init__(self, archivo_csv):
+    def __init__(self, archivo_csv, archivo_categorias):
         self.transacciones = []
+        self.categorias_gasto = []
         self.archivo_csv = archivo_csv
+        self.archivo_categorias = archivo_categorias
         self.cargar_desde_csv()
+        self.cargar_categorias()
 
     def agregar_transaccion(self, transaccion):
         self.transacciones.append(transaccion)
@@ -47,7 +50,6 @@ class FinanzasPersonales:
             return
         transacciones_info = ""
         for t in self.transacciones:
-            color = 'green' if t.tipo == 'ingreso' else 'red'
             transacciones_info += f"Fecha: {t.fecha}, Descripción: {t.descripcion}, Cantidad: {t.cantidad} {t.moneda}, Tipo: {t.tipo}\n"
         messagebox.showinfo("Transacciones", transacciones_info)
 
@@ -71,6 +73,24 @@ class FinanzasPersonales:
         except FileNotFoundError:
             print("El archivo CSV no existe, se creará uno nuevo al guardar las transacciones.")
 
+    def guardar_categorias(self):
+        with open(self.archivo_categorias, mode='w', newline='') as archivo:
+            escritor_csv = csv.writer(archivo)
+            escritor_csv.writerow(['Categoria'])
+            for categoria in self.categorias_gasto:
+                escritor_csv.writerow([categoria])
+
+    def cargar_categorias(self):
+        try:
+            with open(self.archivo_categorias, mode='r') as archivo:
+                lector_csv = csv.reader(archivo)
+                next(lector_csv)  # Saltar la cabecera
+                for fila in lector_csv:
+                    if fila:
+                        self.categorias_gasto.append(fila[0])
+        except FileNotFoundError:
+            print("El archivo de categorías no existe, se creará uno nuevo al guardar las categorías.")
+
 def imprimir_titulo(titulo):
     ascii_art = pyfiglet.figlet_format(titulo)
     lines = ascii_art.split("\n")
@@ -81,37 +101,49 @@ def imprimir_titulo(titulo):
 def agregar_ingreso():
     descripcion = ingreso_var.get()
     cantidad = float(cantidad_var.get())
-    fecha = fecha_ingreso_var.get()
-    transaccion = Transaccion(descripcion, cantidad, 'ingreso', fecha)
-    finanzas.agregar_transaccion(transaccion)
-    # Limpiar las entradas
-    ingreso_var.set("")
-    cantidad_var.set(0.0)
+    fecha = fecha_var.get()
+    try:
+        datetime.strptime(fecha, '%d-%m-%y')
+        transaccion = Transaccion(descripcion, cantidad, 'ingreso', fecha)
+        finanzas.agregar_transaccion(transaccion)
+        ingreso_var.set('')
+        cantidad_var.set(0.0)
+    except ValueError:
+        messagebox.showerror("Error", "Fecha inválida. Por favor, ingrese la fecha en formato DD-MM-YY.")
 
 def agregar_gasto():
     descripcion = gasto_var.get()
     cantidad = float(cantidad_gasto_var.get())
     fecha = fecha_gasto_var.get()
-    transaccion = Transaccion(descripcion, cantidad, 'gasto', fecha)
-    finanzas.agregar_transaccion(transaccion)
-    # Limpiar las entradas
-    gasto_var.set("")
-    cantidad_gasto_var.set(0.0)
-
-def agregar_categoria():
-    nueva_categoria = nueva_categoria_var.get()
-    if nueva_categoria and nueva_categoria not in categorias_gasto:
-        categorias_gasto.append(nueva_categoria)
-        gasto_combobox['values'] = categorias_gasto
-        nueva_categoria_var.set("")
-    else:
-        messagebox.showerror("Error", "La categoría ya existe o está vacía.")
+    try:
+        datetime.strptime(fecha, '%d-%m-%y')
+        transaccion = Transaccion(descripcion, cantidad, 'gasto', fecha)
+        finanzas.agregar_transaccion(transaccion)
+        gasto_var.set('')
+        cantidad_gasto_var.set(0.0)
+    except ValueError:
+        messagebox.showerror("Error", "Fecha inválida. Por favor, ingrese la fecha en formato DD-MM-YY.")
 
 def mostrar_totales():
     finanzas.mostrar_totales()
 
 def mostrar_transacciones():
     finanzas.mostrar_transacciones()
+
+def agregar_categoria():
+    nueva_categoria = nueva_categoria_var.get()
+    if nueva_categoria and nueva_categoria not in finanzas.categorias_gasto:
+        finanzas.categorias_gasto.append(nueva_categoria)
+        gasto_combobox['values'] = finanzas.categorias_gasto
+        finanzas.guardar_categorias()
+        nueva_categoria_var.set('')
+    else:
+        messagebox.showwarning("Advertencia", "La categoría ya existe o está vacía.")
+
+# Crear instancia de FinanzasPersonales
+archivo_csv = 'transacciones.csv'
+archivo_categorias = 'categorias.csv'
+finanzas = FinanzasPersonales(archivo_csv, archivo_categorias)
 
 # Configuración de la ventana principal
 root = Tk()
@@ -120,39 +152,37 @@ root.title("Patet Pecuniae")
 # Crear variables para almacenar la entrada del usuario
 ingreso_var = StringVar()
 cantidad_var = DoubleVar()
-fecha_ingreso_var = StringVar()
+fecha_var = StringVar()
 gasto_var = StringVar()
 cantidad_gasto_var = DoubleVar()
 fecha_gasto_var = StringVar()
 nueva_categoria_var = StringVar()
 
-# Inicializar variables
-ingreso_var.set("")
-cantidad_var.set(0.0)
-gasto_var.set("")
-cantidad_gasto_var.set(0.0)
-nueva_categoria_var.set("")
-
-# Listas de categorías
-categorias_ingreso = ["Nómina", "Extras", "Clau"]
-categorias_gasto = ["Alquiler", "Compra", "Agua", "Luz", "Gas", "Internet", "Samu Cole"]
-
 # Crear widgets
 Label(root, text="Ingreso:").grid(row=0, column=0, padx=5, pady=5)
-ttk.Combobox(root, textvariable=ingreso_var, values=categorias_ingreso).grid(row=0, column=1, padx=5, pady=5)
+ingreso_combobox = ttk.Combobox(root, textvariable=ingreso_var)
+ingreso_combobox['values'] = ['Nómina', 'Extras', 'Clau']
+ingreso_combobox.grid(row=0, column=1, padx=5, pady=5)
+
 Label(root, text="Cantidad:").grid(row=0, column=2, padx=5, pady=5)
 Entry(root, textvariable=cantidad_var).grid(row=0, column=3, padx=5, pady=5)
-Label(root, text="Fecha:").grid(row=0, column=4, padx=5, pady=5)
-DateEntry(root, textvariable=fecha_ingreso_var, date_pattern='dd-mm-yy').grid(row=0, column=5, padx=5, pady=5)
+
+Label(root, text="Fecha (DD-MM-YY):").grid(row=0, column=4, padx=5, pady=5)
+DateEntry(root, textvariable=fecha_var, date_pattern='dd-mm-yy').grid(row=0, column=5, padx=5, pady=5)
+
 Button(root, text="Agregar Ingreso", command=agregar_ingreso).grid(row=0, column=6, padx=5, pady=5)
 
 Label(root, text="Gasto:").grid(row=1, column=0, padx=5, pady=5)
-gasto_combobox = ttk.Combobox(root, textvariable=gasto_var, values=categorias_gasto)
+gasto_combobox = ttk.Combobox(root, textvariable=gasto_var)
+gasto_combobox['values'] = finanzas.categorias_gasto
 gasto_combobox.grid(row=1, column=1, padx=5, pady=5)
+
 Label(root, text="Cantidad:").grid(row=1, column=2, padx=5, pady=5)
 Entry(root, textvariable=cantidad_gasto_var).grid(row=1, column=3, padx=5, pady=5)
-Label(root, text="Fecha:").grid(row=1, column=4, padx=5, pady=5)
+
+Label(root, text="Fecha (DD-MM-YY):").grid(row=1, column=4, padx=5, pady=5)
 DateEntry(root, textvariable=fecha_gasto_var, date_pattern='dd-mm-yy').grid(row=1, column=5, padx=5, pady=5)
+
 Button(root, text="Agregar Gasto", command=agregar_gasto).grid(row=1, column=6, padx=5, pady=5)
 
 Label(root, text="Nueva Categoría de Gasto:").grid(row=2, column=0, padx=5, pady=5)
@@ -161,10 +191,6 @@ Button(root, text="Agregar Categoría", command=agregar_categoria).grid(row=2, c
 
 Button(root, text="Mostrar Totales", command=mostrar_totales).grid(row=3, column=0, columnspan=3, padx=5, pady=5)
 Button(root, text="Mostrar Transacciones", command=mostrar_transacciones).grid(row=3, column=3, columnspan=4, padx=5, pady=5)
-
-# Crear instancia de FinanzasPersonales
-archivo_csv = 'transacciones.csv'
-finanzas = FinanzasPersonales(archivo_csv)
 
 # Mostrar título animado y vistoso
 imprimir_titulo("Patet Pecuniae")
